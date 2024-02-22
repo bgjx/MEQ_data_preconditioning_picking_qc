@@ -6,9 +6,8 @@ Created on Wed Jul 27 17:46:08 2022
 @author : ARHAM ZAKKI EDELO
 @contact: edelo.arham@gmail.com
 """
-
-import pandas as pd;
-import os,math, glob, sys
+import pandas as pd
+import glob, sys
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import defaultdict
@@ -16,8 +15,6 @@ from obspy import UTCDateTime
 
 print('''
 Python code for picking quality control using Wadati Diagram 
-
-    
       ''')
     
 def WadatiChecking(file):
@@ -29,7 +26,7 @@ def WadatiChecking(file):
     split_lines=[line.split() for line in open(file,'r').readlines()]
     for line in split_lines:
 
-        ## Changing the station code (only if it is necessary)
+        ## changing the station code (only if it is necessary)
         try:
             if   line[0]=='0AD13' or line[0]== 'ML01':
                 line[0]='ML01'
@@ -66,7 +63,7 @@ def WadatiChecking(file):
         except Exception:
             pass
             
-        # Insert the respected values to the dictionary holder
+        # insert the respected values to the dictionary holder
         try:
             ## dict_holder={"STATION_NAME":[DATE, HH, MM_p, ATp, MM_s, ATs]}
             if line[2]== 'BHZ' or 'P' in line[4]:
@@ -82,43 +79,51 @@ def WadatiChecking(file):
         except Exception:
             pass
             
-    # Create another dictionary to be the dataframe
+    # create another dictionary to be the dataframe
     arrival[0]= [v for v in list(dict_holder.keys())]
     for x in range(1,7):
-        arrival[x] = [dict_holder[v][x-1] for v in list(dict_holder.keys())]
+        try:
+            arrival[x] = [dict_holder[v][x-1] for v in list(dict_holder.keys())]
+        except Exception:
+            print(e,": Check your pick data, maybe there are some mistakes in the pick's component")
         
-    # Convert Time to UTCDateTime Format
+    # convert Time to UTCDateTime Format
     ATp_UTC, ATs_UTC =[], []
     for i in range(0, len(arrival[5])):
-    
-        utc_p="{}-{:02d}-{:02d}T{:02d}:{:02d}:{:012.9f}". \
-                            format(int(arrival[1][i][:4]),int(arrival[1][i][4:6]),int(arrival[1][i][6:]),int(arrival[2][i]),int(arrival[3][i]), float(arrival[4][i]))
-        utc_s="{}-{:02d}-{:02d}T{:02d}:{:02d}:{:012.9f}". \
-                            format(int(arrival[1][i][:4]),int(arrival[1][i][4:6]),int(arrival[1][i][6:]),int(arrival[2][i]),int(arrival[5][i]), float(arrival[6][i]))
+        utc_p=UTCDateTime("{}-{:02d}-{:02d}T{:02d}:{:02d}:{:012.9f}". \
+                            format(int(arrival[1][i][:4]),int(arrival[1][i][4:6]),int(arrival[1][i][6:]),int(arrival[2][i]),int(arrival[3][i]), float(arrival[4][i])), precision=9)
+        utc_s=UTCDateTime("{}-{:02d}-{:02d}T{:02d}:{:02d}:{:012.9f}". \
+                            format(int(arrival[1][i][:4]),int(arrival[1][i][4:6]),int(arrival[1][i][6:]),int(arrival[2][i]),int(arrival[5][i]), float(arrival[6][i])), precision=9)
         ATp_UTC.append(utc_p)
         ATs_UTC.append(utc_s)
     
     # calculate the lag time ts-tp
     for Tp,Ts in zip(ATp_UTC,ATs_UTC):
-        TsTp=UTCDateTime(Ts, precision=9)- UTCDateTime(Tp, precision=9)
+        TsTp = Ts - Tp
         arrival[7].append(float(TsTp))
         
     date_time= ATp_UTC[0]              ## time for plotting purpose only
     
-    #create the dataframe
+    # create the dataframe
     df=pd.DataFrame.from_dict(arrival)
     df.columns=["Station", "Date", "Hour","Minutes_P", "P_Arr_Sec", "Minutes_S", "S_Arr_Sec", "Ts-Tp"]
     
-    #For plotting purpose
-    x=df['P_Arr_Sec']; y=df['Ts-Tp'];annot=df['Station']
+    # for plotting purpose
+    x= [i.hour*3600 + i.minute*60 + i.second + i.microsecond/1e6 for i in ATp_UTC]
+    x_label=[f"{i.minute}:{i.second+(i.microsecond/1e6):06.3f}" for i in ATp_UTC]
+    y=df['Ts-Tp']
+    y_label=[f"{i:5.3f}" for i in y]
+    annot=df['Station']
     z=np.polyfit(x,y,1)
     p=np.poly1d(z)    
     print('\n\nFor Event ',date_time,' \n',df.to_string(index=False))
-    fig,ax=plt.subplots()
+    fig,ax=plt.subplots(figsize=(11,8))
     ax.scatter(x, y,  s=100, alpha=0.6, edgecolor='black', linewidth=1)
     ax.plot(x,p(x))
     ax.set_xlabel('P Arrival')
     ax.set_ylabel('Ts-Tp')
+    plt.xticks(x, x_label, rotation=-45, fontsize=9)
+    plt.yticks(y, y_label, fontsize=9)
     plt.title("Events %s \n wadati trendline y=%.6fx+%.6f , Vp/Vs %5.3f"%(date_time,z[0],z[1], 1+z[0]))
     for i, label in enumerate(annot):
         plt.text(x[i], y[i], label)
@@ -128,17 +133,19 @@ def WadatiChecking(file):
 if __name__ == "__main__":
     file_name=glob.glob('*.pick') #gather all the picking file
     print("""
-Before you run please choose the checking mode below:
+    Before you run please choose the checking mode below:
     [1] Looping Mode   :QC will continue to the next pick when you close the plot window
     [2] Selection Mode :Choose spesific pick file by ID number, after closing the plot window you can choose other pick.
     """)
     prompt=int(input('Please type 1/2 to select the mode :'))
     if prompt != 1 and prompt != 2:
         sys.exit("You didn't choose the correct mode")
+        
     # looping mode
     elif prompt == 1:
         for i in file_name:
             WadatiChecking(i)
+            
     # selection mode
     elif prompt == 2:
         file_holder=defaultdict(int)

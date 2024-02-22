@@ -3,10 +3,9 @@
 """
 Created on Thu Nov 24 12:10:30 2022
 
-@author: ARHAM ZAKKI EDELO
-contect: edelo.arham@gmail.com
+@author  : ARHAM ZAKKI EDELO
+@contect : edelo.arham@gmail.com
 """
-
 from pathlib import PurePath, Path
 from obspy import read, Trace, Stream, UTCDateTime
 from obspy.signal.trigger import coincidence_trigger as trigger
@@ -18,11 +17,19 @@ Python code for event recognition
 Before you run this program, make sure you have changed all the path correctly      
       ''')
 
+# Parameters
+min_stations = 4    # minimum station in coincidence trigger
+on_threshold = 2.5  # trigger on threshold
+off_threshold = 1.5 # trigger off threshold
+sta_duration = 0.4  # sta duration 
+lta_duration = 7    # lta duration
+
+# Hour path holder
 HourPath=["00","01","02","03","04","05","06","07","08","09","10","11","12"
            ,"13","14","15","16","17","18","19","20","21","22","23"]
 
 #Input and output path 
-Input = Path(r"E:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 10\day_304")
+Input = Path(r"F:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 12\day_365")
 FileOutput = input('Insert your desired file name for the trigger output list (press ENTER for default): ')
 FileOutput2=FileOutput
 if len(FileOutput) < 1:
@@ -39,8 +46,10 @@ with open (FileOutput + '_reglog.dat', 'w') as file1, open (FileOutput2 + '_trig
                 st += read(i)
             #st.filter('bandpass', freqmin=10, freqmax=20)  # optional prefiltering ## for prefiltering 
             st2=st.copy()
-            trig=trigger('recstalta',2.5, 1.5, st2, 4, sta=0.4, lta=7 ) ## be coutious of these parameters
+            
             try:
+                # filter the events
+                trig=trigger('recstalta',on_threshold, off_threshold, st2, min_stations, sta = sta_duration, lta = lta_duration) # be coutious of these parameters
                 for i in trig:
                     time=UTCDateTime(i['time'])
                     date=str(time.date)
@@ -51,7 +60,7 @@ with open (FileOutput + '_reglog.dat', 'w') as file1, open (FileOutput2 + '_trig
                     second_fix=SS+'.'+str(MSS)
                     sta=i['stations']
                     sta.sort()
-                    if len(sta) >=4 :
+                    if len(sta) >= 3 :
                         EventCounter+=1
                         
                         # write file reglog
@@ -67,7 +76,7 @@ with open (FileOutput + '_reglog.dat', 'w') as file1, open (FileOutput2 + '_trig
                             pass
                     file2.write('\n')
             except Exception:
-                pass
+                continue
     file1.close()
     file2.close()
     print('-----------  The code has run succesfully! --------------')

@@ -15,9 +15,13 @@ Python code for waveform trimming
 
 Before you run this program, make sure you have changed all the path and set the trimming duration correctly      
       ''')
-    
+# Global Parameters
 #============================================================================================
-# LIST OF FUNCTIONS 
+# trimming duration parameter
+before_pick = 5              #  5 seconds before the earlier pick
+after_pick  = 25             # 25 seconds after the earlier pick
+
+# List of functions 
 #============================================================================================
 def Trim(st, AddTime, bef, aft):
     for tr in st:
@@ -36,8 +40,7 @@ def WriteSeis(SaveDir,st2,SavePath, Event_ID):
         FilesName=f"{int(SavePath[0:8]):8d}_{int(SavePath[9:13]):04d}_{int(SavePath[14:16]):02d}_{s.station}_{s.channel}_{Event_ID:04d}.mseed"
         tr.write(os.path.join(foldername,FilesName),format='mseed')
     return s
-#============================================================================================
-# END OF FUNCTIONS 
+# End of functions 
 #============================================================================================
 
 if __name__ == "__main__":
@@ -49,15 +52,11 @@ if __name__ == "__main__":
         pass
 
     # initialize input and output path
-    Input1   = Path(r"E:\SEML\DATA PICKING MEQ\DATA PICK 2023\PICK 2023 10")            # pick file as the time reference
-    Input2   = Path(r"E:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 10")                      # raw data mseed
-    Save     = Path(r"E:\SEML\DATA TRIMMING\EVENT DATA TRIM\2023\2023 10")              # trimmed data destination
+    Input1   = Path(r"E:\SEML\DATA PICKING MEQ\DATA PICK 2023\PICK 2023 01")              # pick file as the time reference
+    Input2   = Path(r"E:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 01")                        # raw data mseed
+    Save     = Path(r"E:\SEML\DATA TRIMMING\EVENT DATA TRIM\2023\2023 01")                # trimmed data destination
     ID_start = int(input('Please input the event 4 digits ID to startwith (ex: 2000):'))
-    
-    # trimming duration parameter
-    before_pick = 5              #  5 seconds before the earlier pick
-    after_pick  = 25             # 25 seconds after the earlier pick
-    
+
     # gather all picks file as the time reference
     FilesName=glob.glob(os.path.join(Input1, "*.pick"), recursive=True)
     FilesName.sort()
@@ -88,7 +87,7 @@ if __name__ == "__main__":
                         st+=read(WaveNames[v])
                     sst=st.copy()
                     sst=Trim(sst,AddTime, before_pick, after_pick)
-                    NewSeis=WriteSeis(Save,sst,SavePath, ID_start)
+                    NewSeis=WriteSeis(Save, sst, SavePath, ID_start)
                     print(f"{EventCounter} | Trimming Event {ID_start}.....")
                 except Exception as e:
                     print(e)

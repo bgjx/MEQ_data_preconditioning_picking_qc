@@ -44,10 +44,10 @@ def write(save,st2,dirr):
     
 
 # Input=Path(r"D:\PYTHON
-Input=Path(r"E:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 10\day_304\001_Raw")
+Input=Path(r"F:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 12\day_365\001_Raw")
 
 # save=Path(r"D:\PYTHON")
-save=Path(r"E:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 10\day_304\002_Convert")
+save=Path(r"F:\SEML\DATA RAW MEQ\RAW DATA 2023\2023 12\day_365\002_Convert")
 
 listOfFile=sorted([((aa.split(".")[0]),aa) for aa in os.listdir(Input)])
 

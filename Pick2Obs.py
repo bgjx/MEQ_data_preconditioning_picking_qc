@@ -6,8 +6,7 @@ Created on Wed Jul  6 10:12:53 2022
 @author : ARHAM ZAKKI EDELO
 @contact: edelo.arham@gmail.com
 """
-
-import os, math, glob
+import glob
 
 print('''
 Python code for collecting picks and generating NonLinLoc .obs input file 
@@ -16,8 +15,8 @@ Python code for collecting picks and generating NonLinLoc .obs input file
     
 file_name=glob.glob('*.pick') #gather all the picking file
 
-# input the necessary format file extention
-output_format=input("Write the name for your gathered pick file: "); #prompth the output name for the file 
+# set the output file name
+output_format=input("Write the name for your gathered pick file: ")
 
 # write the document
 with open ((output_format + ".obs"), "w") as file_output: #handle the output file
@@ -61,6 +60,7 @@ with open ((output_format + ".obs"), "w") as file_output: #handle the output fil
                 pass
             try:
                 if (line[0] != '\n'):
+                
                     # start writing the *.obs file
                     file_output.write("%s %s %s %s %s %s %8i %4s %11.8f %s %3.8f %3.1f %.5f %3.1f\n" % (line[0],line[1],line[2],line[3],line[4],line[5],int(line[6]),line[7],float(line[8]),line[9],float(line[10]), float(line[11]), float(line[12]), float(line[13])  )) # writing file according to the format
                 else:
